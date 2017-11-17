@@ -1,0 +1,184 @@
+W0      @SCRATCH
+W0L     _RETURN_
+W0 -W2  @MULS4848.P1
+W0 -W1  @READ_ROM_MEMORY.P2
+W0 -W2  @DIVS4848.P3
+W0 -W2  @DIVFF48.P4
+W0 -W1  @DIV3232B.P5
+W0 -W2  @ADDFF48.P6
+W0      @delay_us1.P7
+W0 -W1  @SFTOI.P8
+W0      @PRINTFD16_115200_5725_5724.P9
+W0 -W1  @FLT.P10
+W0 -W3  @SI64TOF64.P11
+W0      @SITOF.P12
+W0 -W3  @MULS6464.P13
+W0 -W3  @DIVS6464.P14
+W0 -W1  @MULS3232.P15
+W0 -W1  @DIVFF.P16
+W0 -W1  @MULFF.P17
+W0 -W3  @SI64TOF48.P18
+W0 -W1  @MUL3232.P19
+W0 -W3  @DIVFF64.P20
+W0 -W3  @F64TO48.P21
+W0 -W1  @ADDFF.P22
+W0 -W1  @DIVS3232A.P23
+W0 -W2  @MULFF48.P24
+W0 -W3  @MULFF64.P25
+W0 -W3  @ADDFF64.P26
+W0      @delay_ms1.P27
+W1      @SCRATCH
+W1      @WRITE_PACKED_MEMORY.P1
+W1      @READ_PACKED_MEMORY.P2
+W2      @READ_ROM_MEMORY.P1
+W2 -W3  @ADDFF.P2
+W2 -W3  @MUL3232.P3
+W2 -W3  @MULFF.P4
+W2      @READ_PACKED_MEMORY.P5
+W2 -W3  @DIVFF.P6
+W2 -W3  @DIV3232B.P7
+W2 -W3  @DIVS3232A.P8
+W2      @WRITE_PACKED_MEMORY.P9
+W2 -W3  @MULS3232.P10
+W2 -W3  @FLT.P11
+W3 -W5  @DIVS4848.P1
+W3      @WRITE_PACKED_MEMORY.P2
+W3 -W5  @DIVFF48.P3
+W3      @READ_PACKED_MEMORY.P4
+W3 -W5  @MULS4848.P5
+W3 -W5  @MULFF48.P6
+W3      @READ_ROM_MEMORY.P7
+W3 -W5  @ADDFF48.P8
+W4      @PRINTFD16_115200_5725_5724.P1
+W4 -W7  @DIVS6464.P2
+W4 -W7  @ADDFF64.P3
+W4 -W7  @DIVFF64.P4
+W4 -W7  @MULS6464.P5
+W4 -W7  @MULFF64.P6
+085.4   TX1IF
+630.6   C1OUT
+630.7   C2OUT
+800-801 strtok.save
+802-805 _Randseed
+806-807 __DYNAMIC_HEAD
+808-80B Kp
+80C-80F Kp_2
+810-813 Ki
+814-817 Ki_2
+818-81B Kd
+81C-81F Kd_2
+820-821 e
+822-823 e_2
+824-827 int_e
+828-82B int_e_2
+82C-82F u
+830-833 u_2
+834-837 control
+838-83B control_2
+83C-83F p_e
+840-843 p_e_2
+844-847 tor
+848-849 duty1
+84A-84D count_pulseX
+84E-851 count_pulseY
+852-855 thetaX
+856-859 thetaY
+85A-85B target_posX
+85C-85D target_posY
+85E-85F h
+860-863 current_posX
+864-867 current_posY
+868-86B current_pos_show
+86C-86D ReadPortB
+86E-86F B0
+870-871 B1
+872-873 B2
+874-875 B3
+876-879 radius
+87A-87B home_state
+87C-87D Run_Motor.h
+87C-87D Run_Motor2.h
+87E-87F control_position.axis
+880-883 control_position.target
+884-887 control_position.currentPosition
+8A2-8A3 drive_motor.axis
+8A4-8A5 drive_motor.direction
+8A6-8A7 drive_motor.speed
+2780-27FF Stack
+
+ROM Allocation:
+000DFC  @const1253.call
+000E1C  drive_motor
+000E94  Home
+000EE0  Initial_X_axis
+000F04  Initial_Y_axis
+000F28  Encoder1_A
+000F6C  Encoder1_B
+000FB2  Encoder2_A
+001006  Encoder2_B
+00105A  @SI64TOF64
+0010BE  @MULFF64
+0011CE  @DIVFF64
+0012D6  @F64TO48
+00131A  @MULFF
+0013DE  @DIVFF
+0014A8  @SFTOI
+0014D4  @PRINTFD16_115200_5725_5724
+0015CA  @ADDFF
+001774  @SITOF
+0017BE  @FLT
+001826  control_position
+001A9A  Run_Motor
+001BF2  Run_Motor2
+001D4A  HardwareInit
+001E02  main
+001E02  @cinit1
+001ECE  @cinit2
+0136  StrtoulGO
+0136  StrtolGO
+
+Project Directory:
+    C:\Users\Teng_is_happy\Documents\Embeded Project\PID_MOTOR\
+
+Project Files:
+    CONTROL_PID.c (link)                                    [17-พ.ย.-17 23:05  CRC=3B1153D9]
+    CONTROL_PID.h                                           [01-พ.ย.-17 23:59  CRC=2DF3F3CA]
+    CONFIG_PIC24.H                                          [17-พ.ย.-17 19:56  CRC=C1654A97]
+    ..\..\..\..\..\Program Files (x86)\PICC\devices\24FJ48GA002.H [12-พ.ย.-13 14:36  CRC=2B092578]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdlib.h [08-มิ.ย.-11 14:39  CRC=0B6669CF]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\stddef.h [16-ก.ค.-10 09:27  CRC=897CEC6C]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\string.h [14-ก.ค.-11 10:13  CRC=23EDEC8F]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\ctype.h [03-ม.ค.-08 13:55  CRC=2D1F019F]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdio.h [31-ก.ค.-07 13:24  CRC=4E4534F4]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdlibm.h [24-ก.พ.-12 09:58  CRC=9523303D]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\memmgmt.c [24-ก.พ.-12 09:47  CRC=E82E24A3]
+    ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdint.h [30-ธ.ค.-08 09:01  CRC=9F7F640F]
+    BL_support.h                                            [05-ม.ค.-17 12:12  CRC=F46A39C9]
+    CDATPIC24.H                                             [25-ก.ค.-17 17:34  CRC=DDB9FE05]
+    BITWISE_LIB.h                                           [09-ส.ค.-17 17:14  CRC=93B1E71D]
+    BITWISE_LIB.c (link)                                    [28-ส.ค.-17 16:22  CRC=C9F547CD]
+
+Source signature=A03A9883
+
+Units:
+    C:\Users\Teng_is_happy\Documents\Embeded Project\PID_MOTOR\CONTROL_PID.o
+    C:\Users\Teng_is_happy\Documents\Embeded Project\PID_MOTOR\BITWISE_LIB.o
+
+Compiler Settings:
+    Processor:      PIC24FJ48GA002
+    Pointer Size:   16
+    ADC Range:      0-1023
+    Opt Level:      9
+    Short,Int,Long: SIGNED: 8,16,32
+    Float,Double:   32,64
+    Case Sensitive: Yes
+
+Output Files:
+    Errors:      PID_MOTOR.err
+    INHX8:       PID_MOTOR.hex
+    Symbols:     PID_MOTOR.sym
+    List:        PID_MOTOR.lst
+    Debug/COFF:  PID_MOTOR.cof
+    Project:     PID_MOTOR.ccspjt
+    Call Tree:   PID_MOTOR.tre
+    Statistics:  PID_MOTOR.STA

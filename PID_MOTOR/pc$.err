@@ -1,0 +1,5 @@
+>>> Warning 202 "CONTROL_PID.c" Line 96(5,16): Variable never used:   target_posY
+>>> Warning 202 "CONTROL_PID.c" Line 100(7,23): Variable never used:   current_pos_show
+>>> Warning 202 "CONTROL_PID.c" Line 102(7,13): Variable never used:   radius
+C:\Users\Teng_is_happy\Documents\Embeded Project\PID_MOTOR\CONTROL_PID.o ===>  0 Errors,  3 Warnings.
+Build Successful.

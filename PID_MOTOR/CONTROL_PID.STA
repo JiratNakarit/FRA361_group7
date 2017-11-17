@@ -1,0 +1,63 @@
+
+ROM used:   1896/33788 (6%)
+            1896/33788 (6%) including unused fragments
+
+            0.5 Average locations per line
+            2.6 Average locations per statement
+
+RAM used:   182/8192 (2%) at main() level
+            224/8192 (3%) worst case
+
+Stack size: 128
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+  199    56   8  CONTROL_PID.c
+   86     0   0  CONTROL_PID.h
+  104     0   0  CONFIG_PIC24.H
+  862     0   0  ..\..\..\..\..\Program Files (x86)\PICC\devices\24FJ48GA002.H
+ 1351   524  72  ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdlib.h
+   32     0   0  ..\..\..\..\..\Program Files (x86)\PICC\drivers\stddef.h
+  423     0   0  ..\..\..\..\..\Program Files (x86)\PICC\drivers\string.h
+   28     0   0  ..\..\..\..\..\Program Files (x86)\PICC\drivers\ctype.h
+   37     0   0  ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdio.h
+  326   134  18  ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdlibm.h
+   76    13   2  ..\..\..\..\..\Program Files (x86)\PICC\drivers\memmgmt.c
+  163     0   0  ..\..\..\..\..\Program Files (x86)\PICC\drivers\stdint.h
+   37     0   0  CDATPIC24.H
+----- -----
+ 3724   727 Total
+
+Page ROM  %  RAM   Vol Diff  Functions:
+---- --- --- ---   --- ----  ----------
+0    196   5    8             @MULFF
+0    426  11    8             @ADDFF
+0     44   1    6   365  3.5  drive_motor
+0    298   8   15   675  5.4  control_position
+0    104   3    8             @FLT
+0     44   1    4             @SFTOI
+0    156   4    0    84  1.9  main
+0     66   2    3   412  3.8  HardwareInit
+0     50   1    0    47  1.8  GoRight
+ Inline         0             @cinit1
+
+Program metrics:
+    Functions               5
+    Statements              727
+    Comments                2027
+    Volume (V)              2183
+    Difficulty (D)          16.5
+    Effort to implement (E) 35972
+    Time to implement (T)   33 minutes
+    Est Delivered Bugs (B)  0
+    Cyclomatic Complexity   7
+    Maintainability (MI)    47
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-00002     4  0  
+00004-001FE   508  0  
+00200-083FA  1384  31892  
+
+
+
