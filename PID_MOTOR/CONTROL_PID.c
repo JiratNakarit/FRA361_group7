@@ -167,9 +167,9 @@ void drive_motor(int axis,int direction,int speed){
 
 void control_position(int axis, float target, float currentPosition) {
 	if(axis == Xaxis){
-		Kp = 4;
-		Ki = 0.00000001;
-		Kd = 2;
+		Kp = 3.10588;
+		Ki = 0.00001;
+		Kd = 1.5;
 		
 		e = target - currentPosition;
 		int_e = int_e + e;
@@ -192,7 +192,7 @@ void control_position(int axis, float target, float currentPosition) {
 		}
 	}
 	else if(axis == Yaxis){
-		Kp_2 = 1.99521;
+		Kp_2 = 3.07811;
 		Ki_2 = 0.00001;
 		Kd_2 = 1.5;
 		
@@ -309,47 +309,15 @@ void Home(void){
 
 #INT_EXT1
 void Initial_X_axis(void){
-	/*thetaX = (count_pulseX*7.5)/64;
-	thetaY = (count_pulseY*7.5)/64;
-	current_posX = (thetaX*(22/7)*radius)/180;
-	current_posY = (thetaY*(22/7)*radius)/180;
-	int h = thetaX;
-	printf("\ncurrent_posX = %d",h);
-	control_position(Xaxis, 360 , thetaX);*/
 	clear_interrupt(INT_TIMER4);
 	enable_interrupts(INT_TIMER4);
-
-	/*int_e = 0;
-	count_pulseX = 0;
-	current_posX = 0;
-	drive_motor(Xaxis,MINUS,0);
-	printf("InitialX");
-	home_state =  2;*/
 	return;
 }
 
 #INT_EXT2
 void Initial_Y_axis(void){
-	/*thetaX = (count_pulseX*7.5)/64;
-	thetaY = (count_pulseY*7.5)/64;
-	current_posX = (thetaX*(22/7)*radius)/180;
-	current_posY = (thetaY*(22/7)*radius)/180;
-	int h = thetaX;
-	printf("\ncurrent_posX = %d",h);
-	control_position(Xaxis, -360 , thetaX);*/
-
 	clear_interrupt(INT_TIMER5);
 	enable_interrupts(INT_TIMER5);
-	/*int_e_2 = 0;
-	count_pulseY = 0;
-	current_posY = 0;
-	drive_motor(Yaxis,MINUS,0); 
-	printf("InitialY");
-	home_state = 0;
-	drive_motor(Xaxis,MINUS,0);
-	disable_interrupts(INT_TIMER1);
-	clear_interrupt(INT_TIMER4);
-	enable_interrupts(INT_TIMER4);	*/
 	return;
 }	
 
@@ -385,12 +353,11 @@ void Encoder1_B(void){
 void Encoder2_A(void){
 	ReadPortB = input_b() & 0x000c; 
 	B2 = (ReadPortB & 0x0004) >> 2; 
-	B3 = (ReadPortB & 0x0008) >> 3;
 	if((B2 ^ B3) == 0){
-		count_pulseY--;
+		count_pulseY++;
 	}
 	else{
-		count_pulseY++;
+		count_pulseY--;
 	}
 	//printf("\ncount_pulseY = %d",count_pulseY);
 	return;
@@ -399,13 +366,12 @@ void Encoder2_A(void){
 #INT_IC4
 void Encoder2_B(void){
 	ReadPortB = input_b() & 0x000c;  
-	B2 = (ReadPortB & 0x0004) >> 2;
 	B3 = (ReadPortB & 0x0008) >> 3;
 	if((B2 ^ B3) == 0){
-		count_pulseY++;
+		count_pulseY--;
 	}
 	else{
-		count_pulseY--;
+		count_pulseY++;
 	}
 	//printf("\ncount_pulseY = %d",count_pulseY);
 	return;
@@ -418,10 +384,10 @@ void Run_Motor(void){
 	current_posX = (thetaX*(22/7)*radius)/180;
 	current_posY = (thetaY*(22/7)*radius)/180;
 	int h = thetaX;
-	printf("\ncurrent_posX = %d",h);
+	printf("\n\r%d",h);
 	//current_pos_show = (current_posX*(22/7)) * radius * 10;
 	//control_position(Yaxis, target_posY, current_posY);
-	control_position(Xaxis, 180 , thetaX);
+	control_position(Xaxis, 360 , thetaY);
 	//drive_motor(Yaxis,MINUS,100);
 	disable_interrupts(INT_TIMER5);
 	return;
@@ -434,10 +400,10 @@ void Run_Motor2(void){
 	current_posX = (thetaX*(22/7)*radius)/180;
 	current_posY = (thetaY*(22/7)*radius)/180;
 	int h = thetaX;
-	printf("\ncurrent_posX = %d",h);
+	printf("\n\r%d",h);
 	//current_pos_show = (current_posX*(22/7)) * radius * 10;
 	//control_position(Yaxis, target_posY, current_posY);
-	control_position(Xaxis, -180 , thetaX);
+	control_position(Xaxis, -360 , thetaY);
 	//drive_motor(Yaxis,MINUS,100);
 	disable_interrupts(INT_TIMER4);
 	return;
