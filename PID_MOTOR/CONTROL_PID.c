@@ -1,32 +1,25 @@
 /*
 *************************** C SOURCE FILE ************************************
-
 project   :
 filename  : CONTROL_PID.C
 version   : 2
 date      :
-
 ******************************************************************************
-
 Copyright (c) 20xx
 All rights reserved.
-
 ******************************************************************************
-
 VERSION HISTORY:
 ----------------------------
 Version      : 1
 Date         :
 Revised by   :
 Description  :
-
 Version      : 2
 Date         :
 Revised by   :
 Description  : *
                *
                *
-
 ******************************************************************************
 */
 
@@ -53,6 +46,10 @@ Description  : *
 #define STOP 0
 #define PLUS 1
 #define MINUS 2
+#define CW 1 
+#define CCW 2
+#define MOTOR_L 1
+#define MOTOR_R 2
 
 /****************************************************************************/
 /**                                                                        **/
@@ -88,7 +85,7 @@ float int_e = 0,int_e_2 = 0;
 float u = 0,u_2 = 0;
 float control = 0,control_2 = 0;
 float p_e = 0,p_e_2 = 0;
-float tor = 0.5;
+float tor = 3;
 static int16u duty1;
 int32s count_pulseX = 0; 
 int32s count_pulseY = 0; 
@@ -99,7 +96,6 @@ int target_posY = 0;
 int h;
 static float current_posX = 0;
 static float current_posY = 0;
-float current_pos_show = 0;
 int16u ReadPortB,B0,B1,B2,B3;
 float radius = 11.46;
 
@@ -120,104 +116,123 @@ void drive_motor(int axis,int direction,int speed){
 	X_PLUS = Left(CW) + Right(CW)
 ****************************/
 	
-	if(speed == 0){
-			output_high(IN1);
-			output_high(IN2);
-			output_high(IN3);
-			output_high(IN4);
+	if(speed == 0 || direction == STOP){
+		if(axis == MOTOR_L){
+			output_low(IN3);
+			output_low(IN4);
+		}
+		else if(axis == MOTOR_R){
+			output_low(IN1);
+			output_low(IN2);
+		}	
+			set_pwm_duty(1, 400);
+			set_pwm_duty(2, 400);
 	}
-	else if(axis == Xaxis){
-		if(direction == MINUS){
+	else if(axis == MOTOR_L){
+		if(direction == CW){
+			output_high(IN3);
+			output_low(IN4);
+			set_pwm_duty(1, speed);
+			set_pwm_duty(2, speed);
+		}
+		else if(direction == CCW){
+			output_low(IN3);
+			output_high(IN4);
+			set_pwm_duty(1, speed);
+			set_pwm_duty(2, speed);
+		}
+	}
+	else if(axis == MOTOR_R){
+		if(direction == CW){
+			output_high(IN1);    
+			output_low(IN2);
+			set_pwm_duty(1, speed);
+			set_pwm_duty(2, speed);
+		}
+		else if(direction == CCW){
 			output_low(IN1);    
 			output_high(IN2);
-			output_low(IN3);
-			output_high(IN4);
-			set_pwm_duty(1, speed);
-			set_pwm_duty(2, speed);		
-		}
-		else if(direction == PLUS){	
-			output_high(IN1);    
-			output_low(IN2);	    
-			output_high(IN3);
-			output_low(IN4);
 			set_pwm_duty(1, speed);
 			set_pwm_duty(2, speed);
 		}
 	}
-
-	else if(axis == Yaxis){
-		if(direction == PLUS){
-			output_low(IN1);
-			output_high(IN2);
-			output_high(IN3);
-			output_low(IN4);
-			set_pwm_duty(1, speed);
-			set_pwm_duty(2, speed);
-		}
-		else if(direction == MINUS){
-			output_high(IN1);
-			output_low(IN2);
-			output_low(IN3);
-			output_high(IN4);
-			set_pwm_duty(1, speed);
-			set_pwm_duty(2, speed);
-		}	
-	}	
+	
 }
 
 void control_position(int axis, float target, float currentPosition) {
-	if(axis == Xaxis){
-		Kp = 3.10588;
-		Ki = 0.00001;
-		Kd = 1.5;
-		
-		e = target - currentPosition;
+	if(axis == MOTOR_L){
+		float targetX = target;
+		float currentX = currentPosition;
+		Kp = 8;
+		Ki = 0.001;
+		Kd = 2.5;
+
+		e = targetX - currentX;
 		int_e = int_e + e;
 		u = Kp*e + Ki*int_e + Kd*(e-p_e);
 		p_e = e;  
 		
 		if (abs(e)>tor){
-			if(u > 255){
+			if(abs(u) > 255){
 				control = 255;	
 			}
-			else{
-				control = abs(u);
+			else if(abs(u)<50){
+				control = abs((50/255)*400);
+			}else{
+				control = abs((u/255)*400);
 			}
-		}
-		if (u>0){
-			drive_motor(axis,PLUS,control);
-		}
-		else{
-			drive_motor(axis,MINUS,control);
+			
+			if (u>0){
+				drive_motor(axis,CW,control);
+			}
+			else{
+				drive_motor(axis,CCW,control);
+			}
+		}else{
+				drive_motor(Xaxis,STOP,0);
 		}
 	}
-	else if(axis == Yaxis){
-		Kp_2 = 3.07811;
-		Ki_2 = 0.00001;
-		Kd_2 = 1.5;
-		
-		e_2 = target - currentPosition;
+	else if(axis == MOTOR_R){
+		float targetY = target;
+		float currentY = currentPosition;
+		Kp_2 = 9.5;  //old value = 3.07811
+		Ki_2 = 0.000000006;
+		Kd_2 = 2;
+
+		e_2 = targetY - currentY;
 		int_e_2 = int_e_2 + e_2;
 		u_2 = Kp_2*e_2 + Ki_2*int_e_2 + Kd_2*(e_2-p_e_2);
 		p_e_2 = e_2;  
 		
 		if (abs(e_2)>tor){
-			if(u_2 > 255){
-				control_2 = 255;	
+			if(abs(u_2) > 255){
+				control_2 = 255;
+			}
+			else if(abs(u_2) < 50){
+				control_2 = abs((50/255)*400);
+			}else{
+				control_2 = abs((u_2/255)*400);
+			}
+			if (u_2>0){
+				drive_motor(axis,CW,control_2);
 			}
 			else{
-				control_2 = abs(u_2);
+				drive_motor(axis,CCW,control_2);
 			}
+			
+		}else{
+			drive_motor(Yaxis,STOP,0);
 		}
-		if (u_2>0){
-			drive_motor(axis,PLUS,control_2);
-		}
-		else{
-			drive_motor(axis,MINUS,control_2);
-		}
+		
 	}
+	
 }
-
+void Encoder(void){
+	thetaX = (count_pulseX*7.5)/64;
+	thetaY = (count_pulseY*7.5)/64;
+	current_posX = (thetaX*(22/7)*radius)/180;
+	current_posY = (thetaY*(22/7)*radius)/180;
+}
 /****************************************************************************/
 /**                                                                        **/
 /**                             LOCAL FUNCTIONS                            **/
@@ -265,12 +280,15 @@ static void HardwareInit (void)
 	
 	clear_interrupt(INT_EXT2);
 	enable_interrupts(INT_EXT2);
-	
+
 	/*clear_interrupt(INT_TIMER1);
 	enable_interrupts(INT_TIMER1);*/
+	
+	/*clear_interrupt(INT_TIMER5);
+	enable_interrupts(INT_TIMER5);*/
 
-	/*clear_interrupt(INT_TIMER4);
-	enable_interrupts(INT_TIMER4);*/
+	clear_interrupt(INT_TIMER4);
+	enable_interrupts(INT_TIMER4);
 
 	duty1 = START_DUTY;
 	set_compare_time(1, duty1, duty1);
@@ -299,25 +317,44 @@ static void HardwareInit (void)
 #INT_TIMER1
 void Home(void){
 	if(home_state == 1){
-		drive_motor(Xaxis,MINUS,80);
+		drive_motor(MOTOR_R,CCW,100);
+		drive_motor(MOTOR_L,CCW,100);
 	}
 	else if(home_state == 2){
-		drive_motor(Yaxis,PLUS,80);
+		drive_motor(MOTOR_R,CCW,100);
+		drive_motor(MOTOR_L,CW,100);
 	}
+	else if(home_state == 0){
+		disable_interrupts(INT_TIMER1);
+		/*clear_interrupt(INT_TIMER4);
+		enable_interrupts(INT_TIMER4);*/
+	}	
 	return;
 }
 
 #INT_EXT1
-void Initial_X_axis(void){
-	clear_interrupt(INT_TIMER4);
-	enable_interrupts(INT_TIMER4);
+void Initial_Y_axis(void){
+	count_pulseY = 0;
+	thetaY = 0;
+	current_posY = 0;
+	drive_motor(MOTOR_R,STOP,0);
+	drive_motor(MOTOR_L,STOP,0);
+	//disable_interrupts(INT_TIMER1);
+	home_state = 0;
+	//disable_interrupts(INT_EXT2);
+	
+	/*clear_interrupt(INT_TIMER4);
+	enable_interrupts(INT_TIMER4);*/
 	return;
 }
-
 #INT_EXT2
-void Initial_Y_axis(void){
-	clear_interrupt(INT_TIMER5);
-	enable_interrupts(INT_TIMER5);
+void Initial_X_axis(void){
+	count_pulseX = 0;
+	thetaX = 0;
+	current_posX = 0;
+	home_state = 2;
+	//drive_motor(Yaxis,PLUS,0);
+	disable_interrupts(INT_EXT2);
 	return;
 }	
 
@@ -354,10 +391,10 @@ void Encoder2_A(void){
 	ReadPortB = input_b() & 0x000c; 
 	B2 = (ReadPortB & 0x0004) >> 2; 
 	if((B2 ^ B3) == 0){
-		count_pulseY++;
+		count_pulseY--;
 	}
 	else{
-		count_pulseY--;
+		count_pulseY++;
 	}
 	//printf("\ncount_pulseY = %d",count_pulseY);
 	return;
@@ -368,10 +405,10 @@ void Encoder2_B(void){
 	ReadPortB = input_b() & 0x000c;  
 	B3 = (ReadPortB & 0x0008) >> 3;
 	if((B2 ^ B3) == 0){
-		count_pulseY--;
+		count_pulseY++;
 	}
 	else{
-		count_pulseY++;
+		count_pulseY--;
 	}
 	//printf("\ncount_pulseY = %d",count_pulseY);
 	return;
@@ -379,33 +416,25 @@ void Encoder2_B(void){
 
 #INT_TIMER4
 void Run_Motor(void){
-	thetaX = (count_pulseX*7.5)/64;
-	thetaY = (count_pulseY*7.5)/64;
-	current_posX = (thetaX*(22/7)*radius)/180;
-	current_posY = (thetaY*(22/7)*radius)/180;
-	int h = thetaX;
-	printf("\n\r%d",h);
-	//current_pos_show = (current_posX*(22/7)) * radius * 10;
-	//control_position(Yaxis, target_posY, current_posY);
-	control_position(Xaxis, 360 , thetaY);
-	//drive_motor(Yaxis,MINUS,100);
 	disable_interrupts(INT_TIMER5);
+	Encoder();
+	printf("\nSwitch Right");
+	control_position(MOTOR_L,72,current_posX);
+	control_position(MOTOR_R,72,current_posY);
+	//control_position(MOTOR_L,360,thetaX);	
 	return;
 }
 
 #INT_TIMER5
 void Run_Motor2(void){
-	thetaX = (count_pulseX*7.5)/64;
-	thetaY = (count_pulseY*7.5)/64;
-	current_posX = (thetaX*(22/7)*radius)/180;
-	current_posY = (thetaY*(22/7)*radius)/180;
-	int h = thetaX;
-	printf("\n\r%d",h);
-	//current_pos_show = (current_posX*(22/7)) * radius * 10;
-	//control_position(Yaxis, target_posY, current_posY);
-	control_position(Xaxis, -360 , thetaY);
-	//drive_motor(Yaxis,MINUS,100);
 	disable_interrupts(INT_TIMER4);
+	Encoder();
+	int t = thetaY;
+	printf("\n%d",t);
+	drive_motor(MOTOR_L,CCW,150);
+	drive_motor(MOTOR_R,CW,150);
+	//control_position(MOTOR_L,360,current);
+	//control_position(MOTOR_R,72,current_posY);
 	return;
 }
 
