@@ -101,8 +101,10 @@ float y_d, dy_d, ddy_d;
 float e_x, e_y;
 float int_e_x = 0.0f;
 float int_e_y = 0.0f;
-float p_x, p_y;
-float dx, dy;
+float p_x = 0;
+float p_y = 0;
+float dx = 0;
+float dy = 0;
 float control_x;
 float control_y;
 float A_x = 0.0f;
@@ -224,17 +226,17 @@ void trajectory(float currentX, float currentY, float R, float theta)
 	float T;
 	t = timer_count;
 
-	A_x = 5;
-	Kp_x = 5;
-	Ki_x = 0;
-	Kd_x = 0;
+	A_x = 300;
+	Kp_x = 100;
+	Ki_x = 0.00001;
+	Kd_x = 20;
 
-	A_y = 5;
-	Kp_y = 5;
-	Ki_y = 0;
-	Kd_y = 0;
+	A_y = 300;
+	Kp_y = 100;
+	Ki_y = 0.00001;
+	Kd_y = 20;
 
-	T = 5;
+	T = 2;
 
 	r = (R/pow(T,3))*(10*pow(t,3) - 15*pow(t,4)/T + 6*pow(t,5)/pow(T,2));
 	dr = (R/pow(T,3))*(30*pow(t,2) - 60*pow(t,3)/T + 30*pow(t,4)/pow(T,2));
@@ -254,11 +256,10 @@ void trajectory(float currentX, float currentY, float R, float theta)
 	int_e_y = int_e_y + e_y;
 	dy = currentY - p_y;
 	p_y = currentY;
-
 	u_x = A_x*(ddx_d) + Kp_x*e + Ki_x*int_e_x + Kd_x*(dx_d-dx);
 	u_y = A_y*(ddy_d) + Kp_y*e + Ki_y*int_e_y + Kd_y*(dy_d-dy);
-
-	if(abs(e_x) > tor && abs(e_y) > tor)
+	//printf("\r\n u(%d) || currentX(%d) || e_x(%d) || x_d(%d)",(int)u_x,(int)currentX,(int)e_x,(int)x_d);
+	if(t <= T)
 	{
 		if(abs(u_x) > 255 && abs(u_y) > 255)
 		{
@@ -329,9 +330,242 @@ void trajectory(float currentX, float currentY, float R, float theta)
 	}
 	else
 	{
+		printf("\r\n STOPPU");
 		drive_motor(MOTOR_L,STOP,0);
 		drive_motor(MOTOR_R,STOP,0);
 	}
+/*
+	if(abs(e_x) > tor && abs(e_y) > tor)
+	{
+		if(abs(u_x) > 255 && abs(u_y) > 255)
+		{
+			control_x = 255;
+			control_y = 255;
+		}
+		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = 255;
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) > 255 && abs(u_y) < 50)
+		{
+			control_x = 255;
+			control_y = abs((50/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = 255;
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((50/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) > 255)
+		{
+			control_x = abs((50/255)*400);
+			control_y = 255;
+		}
+		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) < 50)
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((50/255)*400);
+		}
+
+		if(u_x > 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,CW,control_x);
+			drive_motor(MOTOR_R,CW,control_y);
+		}
+		else if(u_x > 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,CW,control_x);
+			drive_motor(MOTOR_R,CCW,control_y);
+		}
+		else if(u_x < 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,CCW,control_x);
+			drive_motor(MOTOR_R,CW,control_y);
+		}
+		else if(u_x < 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,CCW,control_x);
+			drive_motor(MOTOR_R,CCW,control_y);
+		}
+	}
+	else if(abs(e_x) > tor && abs(e_y) < tor)
+	{
+		if(abs(u_x) > 255 && abs(u_y) > 255)
+		{
+			control_x = 255;
+			control_y = 255;
+		}
+		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = 255;
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) > 255 && abs(u_y) < 50)
+		{
+			control_x = 255;
+			control_y = abs((50/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = 255;
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((50/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) > 255)
+		{
+			control_x = abs((50/255)*400);
+			control_y = 255;
+		}
+		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) < 50)
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((50/255)*400);
+		}
+		else
+		{
+			drive_motor(MOTOR_R,STOP,0);
+		}
+
+		if(u_x > 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,CW,control_x);
+			drive_motor(MOTOR_R,STOP,0);
+		}
+		else if(u_x > 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,CW,control_x);
+			drive_motor(MOTOR_R,STOP,0);
+		}
+		else if(u_x < 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,CCW,control_x);
+			drive_motor(MOTOR_R,STOP,0);
+		}
+		else if(u_x < 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,CCW,control_x);
+			drive_motor(MOTOR_R,STOP,0);
+		}
+		else
+		{
+			drive_motor(MOTOR_R,STOP,0);
+		}
+	}
+	else if(abs(e_x) < tor && abs(e_y) > tor)
+	{
+		if(abs(u_x) > 255 && abs(u_y) > 255)
+		{
+			control_x = 255;
+			control_y = 255;
+		}
+		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = 255;
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) > 255 && abs(u_y) < 50)
+		{
+			control_x = 255;
+			control_y = abs((50/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = 255;
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((50/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) > 255)
+		{
+			control_x = abs((50/255)*400);
+			control_y = 255;
+		}
+		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) < 50)
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((50/255)*400);
+		}
+		else
+		{
+			drive_motor(MOTOR_L,STOP,0);
+		}
+
+		if(u_x > 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,STOP,0);
+			drive_motor(MOTOR_R,CW,control_y);
+		}
+		else if(u_x > 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,STOP,0);
+			drive_motor(MOTOR_R,CCW,control_y);
+		}
+		else if(u_x < 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,STOP,0);
+			drive_motor(MOTOR_R,CW,control_y);
+		}
+		else if(u_x < 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,STOP,0);
+			drive_motor(MOTOR_R,CCW,control_y);
+		}
+		else
+		{
+			drive_motor(MOTOR_L,STOP,0);
+		}
+	}
+	else
+	{
+		printf("\r\n STOPPU");
+		drive_motor(MOTOR_L,STOP,0);
+		drive_motor(MOTOR_R,STOP,0);
+	}
+*/
+	//printf("\r\n t(%.2f) || u_x(%.2f) || u_y(%.2f)", t, u_x, u_y);
 }
 
 void control_position(int axis, float target, float currentPosition) {
@@ -857,6 +1091,7 @@ void Home(void){
 #INT_EXT1
 void Initial_Y_axis(void){
 	move_state = 'z';
+	count_pulseX = 0;
 	count_pulseY = 0;
 	thetaY = 0;
 	current_posY = 0;
@@ -872,6 +1107,7 @@ void Initial_Y_axis(void){
 #INT_EXT2
 void Initial_X_axis(void){
 	count_pulseX = 0;
+	count_pulseY = 0;
 	thetaX = 0;
 	current_posX = 0;
 	home_state = 2;
@@ -904,7 +1140,7 @@ void Encoder1_B(void){
 	else{
 		count_pulseX--;
 	}
-	//printf("\ncount_pulseX = %d",count_pulseX);
+	//printf("\r\ncount_pulseX = %d",count_pulseX);
 	return;
 }
 	
@@ -918,7 +1154,7 @@ void Encoder2_A(void){
 	else{
 		count_pulseY++;
 	}
-	//printf("\ncount_pulseY = %d",count_pulseY);
+	//printf("\r\ncount_pulseY = %d",count_pulseY);
 	return;
 }
 
@@ -932,7 +1168,7 @@ void Encoder2_B(void){
 	else{
 		count_pulseY--;
 	}
-	//printf("\ncount_pulseY = %d",count_pulseY);
+	//printf("\r\ncount_pulseY = %d",count_pulseY);
 	return;
 }
 
@@ -942,7 +1178,7 @@ void Run_Motor(void){
 	timer_count = timer_count + 0.1;
 	Encoder();
 	//move_motor(move_state);
-	trajectory(current_posX, current_posY, 50, 180);
+	trajectory(current_posX, current_posY, 10, 0);
 	/*printf("\nSwitch Right");
 	control_position(MOTOR_L,72,current_posX);
 	control_position(MOTOR_R,72,current_posY);*/
