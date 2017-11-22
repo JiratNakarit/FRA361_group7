@@ -228,15 +228,15 @@ void trajectory(float currentX, float currentY, float R, float theta)
 
 	A_x = 300;
 	Kp_x = 100;
-	Ki_x = 0.00001;
-	Kd_x = 20;
+	Ki_x = 0;
+	Kd_x = 0;
 
 	A_y = 300;
 	Kp_y = 100;
-	Ki_y = 0.00001;
-	Kd_y = 20;
+	Ki_y = 0;
+	Kd_y = 0;
 
-	T = 2;
+	T = 5.0;
 
 	r = (R/pow(T,3))*(10*pow(t,3) - 15*pow(t,4)/T + 6*pow(t,5)/pow(T,2));
 	dr = (R/pow(T,3))*(30*pow(t,2) - 60*pow(t,3)/T + 30*pow(t,4)/pow(T,2));
@@ -252,14 +252,23 @@ void trajectory(float currentX, float currentY, float R, float theta)
 	int_e_x = int_e_x + e_x;	
 	dx = currentX - p_x;
 	p_x = currentX;
+
 	e_y = dy_d - currentY;
 	int_e_y = int_e_y + e_y;
 	dy = currentY - p_y;
 	p_y = currentY;
-	u_x = A_x*(ddx_d) + Kp_x*e + Ki_x*int_e_x + Kd_x*(dx_d-dx);
-	u_y = A_y*(ddy_d) + Kp_y*e + Ki_y*int_e_y + Kd_y*(dy_d-dy);
-	//printf("\r\n u(%d) || currentX(%d) || e_x(%d) || x_d(%d)",(int)u_x,(int)currentX,(int)e_x,(int)x_d);
-	if(t <= T)
+
+	u_x = A_x*(ddx_d) + Kp_x*e_x + Ki_x*int_e_x + Kd_x*(dx_d-dx);
+	u_y = A_y*(ddy_d) + Kp_y*e_y + Ki_y*int_e_y + Kd_y*(dy_d-dy);
+
+	/*
+	if (t == T)
+	{
+		printf("\r\n r(%d) || t(%d) || dx_d(%d) || dy_d(%d)",(int)r,(int)t*10,(int)dy_d,(int)x_d);
+	}
+	*/
+	printf("\r\n y_d(%d) || dy_d(%d) || ddy_d(%d)",(int)y_d,(int)dy_d,(int)ddy_d);
+	if(t < T)
 	{
 		if(abs(u_x) > 255 && abs(u_y) > 255)
 		{
@@ -330,7 +339,7 @@ void trajectory(float currentX, float currentY, float R, float theta)
 	}
 	else
 	{
-		printf("\r\n STOPPU");
+		//printf("\r\n STOPPU");
 		drive_motor(MOTOR_L,STOP,0);
 		drive_motor(MOTOR_R,STOP,0);
 	}
@@ -1178,7 +1187,7 @@ void Run_Motor(void){
 	timer_count = timer_count + 0.1;
 	Encoder();
 	//move_motor(move_state);
-	trajectory(current_posX, current_posY, 10, 0);
+	trajectory(current_posX, current_posY, 50, 45);
 	/*printf("\nSwitch Right");
 	control_position(MOTOR_L,72,current_posX);
 	control_position(MOTOR_R,72,current_posY);*/
