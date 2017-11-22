@@ -33,13 +33,12 @@ Description  : *
 
 #include "CONTROL_PID.h"
 #include "BITWISE_LIB.h"
-
+#include <math.h>
 /****************************************************************************/
 /**                                                                        **/
 /**                        DEFINITIONS AND MACROS                          **/
 /**                                                                        **/
 /****************************************************************************/
-#define PI 3.14159265
 
 #define START_DUTY 0
 #define Xaxis 0
@@ -96,14 +95,26 @@ static int8u ConvertStr2Int (int8u num);
 /**                            GLOBAL VARIABLES                            **/
 /**                                                                        **/
 /****************************************************************************/
-	float r, dr, ddr;
-	float x_d, dx_d, ddx_d;
-	float y_d, dy_d, ddy_d;
-	float e_x, e_y;
-	float int_e_x = 0.0f;
-	float int_e_y = 0.0f;
-	float p_x, p_y;
-	float dx, dy;
+float r, dr, ddr;
+float x_d, dx_d, ddx_d;
+float y_d, dy_d, ddy_d;
+float e_x, e_y;
+float int_e_x = 0.0f;
+float int_e_y = 0.0f;
+float p_x, p_y;
+float dx, dy;
+float control_x;
+float control_y;
+float A_x = 0.0f;
+float Kp_x = 0.0f;
+float Ki_x = 0.0f;
+float Kd_x = 0.0f;
+float A_y = 0.0f;
+float Kp_y = 0.0f;
+float Ki_y = 0.0f;
+float Kd_y = 0.0f;
+float timer_count = 0.0f;
+float u_x, u_y;
 
 float Kp = 0.0f,Kp_2 = 0.0f;
 float Ki = 0.0f,Ki_2 = 0.0f;
@@ -129,6 +140,7 @@ float radius = 11.46;
 
 int home_state = 1;
 char move_state;
+float t;
 
 static volatile Q8UX_STRUCT Tx1QCB;
 static volatile int8u Tx1QArray[TX1Q_LN];
@@ -207,44 +219,119 @@ void drive_motor(int axis,int direction,int speed){
 	
 }
 
-void trajectory(float currentX, float currenty, float R, float theta)
+void trajectory(float currentX, float currentY, float R, float theta)
 {
-	A_x = 0;
-	Kp_x = 0;
+	float T;
+	t = timer_count;
+
+	A_x = 5;
+	Kp_x = 5;
 	Ki_x = 0;
 	Kd_x = 0;
 
-	A_y = 0;
-	Kp_y = 0;
+	A_y = 5;
+	Kp_y = 5;
 	Ki_y = 0;
 	Kd_y = 0;
 
-	a = PI/180;
 	T = 5;
 
-	r = (R/powf(T,3))*(10*powf(t,3) - 15*powf(t,4)/T + 6*powf(t,5)/powf(T,2));
-	dr = (R/powf(T,3))*(30*powf(t,2) - 60*powf(t,3)/T + 30*powf(t,4)/powf(T,2));
-	ddr = (R/powf(T,3))*(60*powf(t,1) - 180*powf(t,2)/T + 120*powf(t,3)/powf(T,2));
-	x_d = (1/(2*a))*r*(cos(theta)+sin(theta));
-	dx_d = (1/(2*a))*dr*(cos(theta)+sin(theta));
-	ddx_d = (1/(2*a))*ddr*(cos(theta)+sin(theta));
-	y_d = (1/(2*a))*r*(cos(theta)-sin(theta));
-	dy_d = (1/(2*a))*dr*(cos(theta)-sin(theta));
-	ddy_d = (1/(2*a))*ddr*(cos(theta)-sin(theta));
+	r = (R/pow(T,3))*(10*pow(t,3) - 15*pow(t,4)/T + 6*pow(t,5)/pow(T,2));
+	dr = (R/pow(T,3))*(30*pow(t,2) - 60*pow(t,3)/T + 30*pow(t,4)/pow(T,2));
+	ddr = (R/pow(T,3))*(60*pow(t,1) - 180*pow(t,2)/T + 120*pow(t,3)/pow(T,2));
+	x_d = 0.5*r*(cos(theta)+sin(theta));
+	dx_d = 0.5*dr*(cos(theta)+sin(theta));
+	ddx_d = 0.5*ddr*(cos(theta)+sin(theta));
+	y_d = 0.5*r*(cos(theta)-sin(theta));
+	dy_d = 0.5*dr*(cos(theta)-sin(theta));
+	ddy_d = 0.5*ddr*(cos(theta)-sin(theta));
 
-	e_x = dx_d - currentX;
-	int_e_x = int_e_x + e_x;
-	p_x = currentX;
+	e_x = x_d - currentX;
+	int_e_x = int_e_x + e_x;	
 	dx = currentX - p_x;
+	p_x = currentX;
 	e_y = dy_d - currentY;
 	int_e_y = int_e_y + e_y;
-	p_y = currentY;
 	dy = currentY - p_y;
+	p_y = currentY;
 
 	u_x = A_x*(ddx_d) + Kp_x*e + Ki_x*int_e_x + Kd_x*(dx_d-dx);
 	u_y = A_y*(ddy_d) + Kp_y*e + Ki_y*int_e_y + Kd_y*(dy_d-dy);
 
-	
+	if(abs(e_x) > tor && abs(e_y) > tor)
+	{
+		if(abs(u_x) > 255 && abs(u_y) > 255)
+		{
+			control_x = 255;
+			control_y = 255;
+		}
+		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = 255;
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) > 255 && abs(u_y) < 50)
+		{
+			control_x = 255;
+			control_y = abs((50/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = 255;
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
+		{
+			control_x = abs((u_x/255)*400);
+			control_y = abs((50/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) > 255)
+		{
+			control_x = abs((50/255)*400);
+			control_y = 255;
+		}
+		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((u_y/255)*400);
+		}
+		else if(abs(u_x) < 50 && abs(u_y) < 50)
+		{
+			control_x = abs((50/255)*400);
+			control_y = abs((50/255)*400);
+		}
+
+		if(u_x > 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,CW,control_x);
+			drive_motor(MOTOR_R,CW,control_y);
+		}
+		else if(u_x > 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,CW,control_x);
+			drive_motor(MOTOR_R,CCW,control_y);
+		}
+		else if(u_x < 0 && u_y > 0)
+		{
+			drive_motor(MOTOR_L,CCW,control_x);
+			drive_motor(MOTOR_R,CW,control_y);
+		}
+		else if(u_x < 0 && u_y < 0)
+		{
+			drive_motor(MOTOR_L,CCW,control_x);
+			drive_motor(MOTOR_R,CCW,control_y);
+		}
+	}
+	else
+	{
+		drive_motor(MOTOR_L,STOP,0);
+		drive_motor(MOTOR_R,STOP,0);
+	}
 }
 
 void control_position(int axis, float target, float currentPosition) {
@@ -447,7 +534,7 @@ int main (void)
             }
 
             //sendTx1Count = SendTx1 (((int8u *)DestPtrStruct.blockPtr));
-            //putc('F');
+            putc('F');
             free ((void *)DestPtrStruct.blockPtr);
             MemCount--;
             //EnableIntr();
@@ -521,7 +608,7 @@ static void HardwareInit (void)
 	setup_timer4 (TMR_INTERNAL | TMR_DIV_BY_256, 6249);
 
 	set_timer5(0);
-	setup_timer5 (TMR_INTERNAL | TMR_DIV_BY_256, 6249);
+	setup_timer5 (TMR_INTERNAL | TMR_DIV_BY_256, 624);
 	return;
 }
 
@@ -756,7 +843,6 @@ void TBE1ISR (void)
 
 #INT_TIMER1
 void Home(void){
-	printf("\nINTERRUPTS TIMER1");
 	if(home_state == 1){
 		drive_motor(MOTOR_R,CCW,100);
 		drive_motor(MOTOR_L,CCW,100);
@@ -853,8 +939,10 @@ void Encoder2_B(void){
 #INT_TIMER4
 void Run_Motor(void){
 	disable_interrupts(INT_TIMER5);
+	timer_count = timer_count + 0.1;
 	Encoder();
-	move_motor(move_state);
+	//move_motor(move_state);
+	trajectory(current_posX, current_posY, 50, 180);
 	/*printf("\nSwitch Right");
 	control_position(MOTOR_L,72,current_posX);
 	control_position(MOTOR_R,72,current_posY);*/
@@ -866,13 +954,7 @@ void Run_Motor(void){
 #INT_TIMER5
 void Run_Motor2(void){
 	disable_interrupts(INT_TIMER4);
-	Encoder();
-	int t = thetaY;
-	printf("\n%d",t);
-	drive_motor(MOTOR_L,CCW,150);
-	drive_motor(MOTOR_R,CW,150);
-	//control_position(MOTOR_L,360,current);
-	//control_position(MOTOR_R,72,current_posY);
+	timer_count = timer_count + 0.01;
 	return;
 }
 
