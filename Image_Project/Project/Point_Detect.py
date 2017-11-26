@@ -1,6 +1,16 @@
 import numpy as np
 import cv2
-import sys
+import math
+import ReadSerial
+import time
+
+# str_to_send = []
+ser1 = ReadSerial.SerialPIC(port="COM19", brate=115200)
+
+
+ser2 = ReadSerial.SerialPIC(port="COM18", brate=115200)
+# rcv = []
+# state = 0
 
 
 def get_coor(event, x, y, flags, param):
@@ -8,6 +18,88 @@ def get_coor(event, x, y, flags, param):
         coor.append((x, y))
     if len(coor) == 4:
         cv2.destroyWindow("image")
+
+
+def find_angle_distance(point):
+    """Return the angle between B-A and the positive x-axis.
+    Values go from 0 to pi in the upper half-plane, and from
+    0 to -pi in the lower half-plane.
+    """
+    ax, ay = point[0]
+    bx, by = point[1]
+    dist = int((math.hypot(bx - ax, by - ay)) * 10)
+    ang = math.degrees(math.atan2(by - ay, bx - ax))
+    if ang < 0:
+        ang += 360
+    ang = int(ang * 10)
+    return dist, ang
+    # return math.degrees(math.atan2(by - ay, bx - ax)), cv2.norm(tuple(point[0]),tuple(point[1]),cv2.NORM_L2)
+
+
+def send_serial(pack):
+    rcv = []
+    global ser1
+    global ser2
+
+    def receive(alphabet, ser):
+        state = 0
+        while True:
+            if ser == 1:
+                rcv_data = ser1.recieveRawPackage()
+            else:
+                pass
+                # rcv_data = ser2.recieveRawPackage()
+            for uni in rcv_data:
+                if chr(uni) == "[":
+                    state = 1
+                    continue
+                elif chr(uni) == "]" and state == 1:
+                    state = 0
+                    break
+                if state == 1:
+                    # print(chr(o), end='')
+                    rcv.append(chr(uni))
+            if len(rcv) == alphabet:
+                break
+        print(rcv)
+        ser1.serial.flush()
+        if 'h' in rcv:
+            print('Home')
+        elif 'e' in rcv:
+            print("End")
+
+    for i in '[h]':
+        ser1.Package.append(ord(i))
+    ser1.SEND(ser1.Package)
+    ser1.Package = []
+    receive(1, 1)
+    rcv = []
+    ser1.serial.flush()
+
+    for ct, shape in enumerate(pack, 0):
+        for ct_, point in enumerate(shape, 0):
+            for chr_ in str(point):
+                if chr_ != ' ':
+                    ser1.Package.append(ord(chr_))
+                else:
+                    continue
+            ser1.SEND(ser1.Package)
+
+            print("SEND!", ser1.Package)
+            ser1.Package = []
+            rcv = []
+            receive(1, 1)
+            if ct_ == 0:
+                for p in '[d]':
+                    ser1.Package.append(ord(p))
+                ser2.SEND(ser1.Package)
+                ser2.Package = []
+                time.sleep(6.5)
+                rcv = []
+                ser1.serial.flush()
+            time.sleep(1)
+            print(ct_)
+        rcv = []
 
 
 img = cv2.imread("newcap1.png")
@@ -76,7 +168,7 @@ else:
         cx = int(M['m10'] / M['m00'])
         cy = int(M['m01'] / M['m00'])
         midpoint = [cy, cx]
-        cv2.drawContours(crop_img, [valid], -1, (0, 255, 0), -1)
+        cv2.drawContours(crop_img, [valid], -1, (0, 0, 255), -1)
         # cv2.imshow("Crop_img", crop_img)
         # cv2.waitKey(0)
 
@@ -89,7 +181,8 @@ else:
     for i in pts:
         # re_arrange.append([])
         for j in i:
-            re_arrange.append((int((j[0][0] + gap_x) * 0.077668 * 100), int((j[0][1] + gap_y) * 0.077668 * 100)))
+            re_arrange.append(
+                (100 + int((j[0][0] + gap_x) * 0.077668 * 100), abs(3000 - int((j[0][1] + gap_y) * 0.077668 * 100))))
         counter += 1
         # TODO If error about truth value appear again use counter instead (same indent level as this comment)
     # print(re_arrange)
@@ -100,15 +193,43 @@ else:
             package[0].append([])
             package[0][c].append(i[c])
             if c == len(i) - 1:
-                package[0][c].append(i[0])
-            else:
-                package[0][c].append(i[c + 1])
+                package[0].append([i[0]])
     print(package)
-    for i in package:
-        for j in i:
-            print(j)  # TODO Change print to send function
-        print("Next")
-
+    send_serial(package)
+    # for out, i in enumerate(package, 0):
+    #     # str_to_send.append([])
+    #     for inner, j in enumerate(i, 0):
+    #         time.sleep(0.5)
+    #         print(j)  # TODO Change print to send function
+    #         for ord_ in str(j):  # TODO Pack ord package
+    #             if ord_ == ' ':
+    #                 pass
+    #             else:
+    #                 pass
+    #                 ser1.Package.append(ord(ord_))
+    #         ser1.SEND(ser.Package)
+    #         ser1.Package = []
+    #         j = ser1.recieveRawPackage()
+    #         for o in j:
+    #             if chr(o) == "[":
+    #                 state = 1
+    #                 continue
+    #             elif chr(o) == "]":
+    #                 state = 0
+    #             if state == 1:
+    #                 # print(chr(o), end='')
+    #                 rcv.append(chr(o))
+    #         # print(int(math.degrees(math.atan2(j[0][1] - j[1][1], j[0][0] - j[1][0])) * 10))
+    #         if inner == 0:
+    #             pass
+    #         # str_to_send[out].append(str(find_angle_distance(((0, 0), j[0]))))
+    #         # str_to_send[out].append(str(find_angle_distance(j)))
+    #         if inner == len(i) - 1 and out != len(package) - 1:
+    #             print('Next')
+    #     if out == len(package) - 1:
+    #         print("End")
+    # print(str_to_send)
+    # print(rcv)
     cv2.imshow("Edge and Crop_img", crop_img)
     cv2.imshow("Edge", edges)
 

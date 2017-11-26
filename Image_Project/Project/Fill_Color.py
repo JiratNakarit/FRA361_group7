@@ -7,7 +7,7 @@ pts = []
 re_arrange = []
 package = []
 
-img = cv2.imread("NewCap2.png", 0)
+img = cv2.imread("NewCap3.png", 0)
 
 diagmask = cv2.imread("Diagonal.png", 0)
 
@@ -16,7 +16,10 @@ crop_point = np.load("Co_or.npz")
 cropped_image = copy.copy(
     img[crop_point['co_or'][2][1]:crop_point['co_or'][3][1], crop_point['co_or'][2][0]:crop_point['co_or'][3][0]])
 
-diagmask = diagmask[crop_point['co_or'][2][1]:crop_point['co_or'][3][1], crop_point['co_or'][2][0]:crop_point['co_or'][3][0]]
+diagmask = diagmask[crop_point['co_or'][2][1]:crop_point['co_or'][3][1],
+           crop_point['co_or'][2][0]:crop_point['co_or'][3][0]]
+
+kernel = np.ones((2, 2), np.uint8)
 
 gap_y = abs(crop_point['co_or'][0][1] - crop_point['co_or'][2][1])
 gap_x = abs(crop_point['co_or'][0][0] - crop_point['co_or'][2][0])
@@ -28,6 +31,8 @@ black_img = np.zeros((h, w), np.uint8)
 black_img2 = copy.copy(black_img)
 
 edge_img = copy.copy(cv2.Canny(cropped_image, 100, 255))
+
+edge_img = cv2.morphologyEx(edge_img, cv2.MORPH_DILATE, kernel)
 
 _, contours, hierarchy = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -42,7 +47,7 @@ for valid in valid_contour:
     approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
     cv2.drawContours(black_img, [valid], 0, 255, -1)
 
-    if 1:
+    if 0:
         pts.append(valid)
     else:
         pts.append(approx)
@@ -80,7 +85,7 @@ for i in re_arrange:
             package[re_arrange.index(i)][c].append(i[0])
         else:
             package[re_arrange.index(i)][c].append(i[c + 1])
-            
+
 for i in package:
     for j in i:
         print(j)  # TODO Change print to send function
