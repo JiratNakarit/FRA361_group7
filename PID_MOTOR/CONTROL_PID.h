@@ -43,6 +43,8 @@ Description  : *
 //#include "cdat68k.h"  // define data types
 #include "CONFIG_PIC24.H"
 #include "CDATPIC24.H"
+#include "EVENT_DRIVEN_CCS.H"
+#include "EVENT_TYPE_CCS.H"
 
 /****************************************************************************/
 /**                                                                        **/

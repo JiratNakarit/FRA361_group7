@@ -101,10 +101,10 @@ float y_d, dy_d, ddy_d;
 float e_x, e_y;
 float int_e_x = 0.0f;
 float int_e_y = 0.0f;
-float p_x = 0;
-float p_y = 0;
-float dx = 0;
-float dy = 0;
+float p_x = 0.0f;
+float p_y = 0.0f;
+float dx = 0.0f;
+float dy = 0.0f;
 float control_x;
 float control_y;
 float A_x = 0.0f;
@@ -116,7 +116,8 @@ float Kp_y = 0.0f;
 float Ki_y = 0.0f;
 float Kd_y = 0.0f;
 float timer_count = 0.0f;
-float u_x, u_y;
+float curX = 0.0f, curY = 0.0f;
+float u_x, u_y,u_y1,u_y2,u_y3;
 
 float Kp = 0.0f,Kp_2 = 0.0f;
 float Ki = 0.0f,Ki_2 = 0.0f;
@@ -221,117 +222,113 @@ void drive_motor(int axis,int direction,int speed){
 	
 }
 
-void trajectory(float currentX, float currentY, float R, float theta)
+void trajectory(float currentA, float currentB, float R, float theta)
 {
 	float T;
+	float currentX, currentY;
+	float u_a = 0, u_b = 0;
 	t = timer_count;
+	theta = theta*PI/180;
 
-	A_x = 300;
-	Kp_x = 100;
+	currentX = 0.5*(currentA + currentB);
+	currentY = 0.5*(currentA - currentB);
+
+	/*A_x = 0;
+	Kp_x = 1;
 	Ki_x = 0;
 	Kd_x = 0;
 
-	A_y = 300;
-	Kp_y = 100;
+	A_y = 0;
+	Kp_y = 1;
 	Ki_y = 0;
-	Kd_y = 0;
+	Kd_y = 0;*/
 
-	T = 5.0;
+	T = 20;
 
-	r = (R/pow(T,3))*(10*pow(t,3) - 15*pow(t,4)/T + 6*pow(t,5)/pow(T,2));
-	dr = (R/pow(T,3))*(30*pow(t,2) - 60*pow(t,3)/T + 30*pow(t,4)/pow(T,2));
-	ddr = (R/pow(T,3))*(60*pow(t,1) - 180*pow(t,2)/T + 120*pow(t,3)/pow(T,2));
-	x_d = 0.5*r*(cos(theta)+sin(theta));
-	dx_d = 0.5*dr*(cos(theta)+sin(theta));
-	ddx_d = 0.5*ddr*(cos(theta)+sin(theta));
-	y_d = 0.5*r*(cos(theta)-sin(theta));
-	dy_d = 0.5*dr*(cos(theta)-sin(theta));
-	ddy_d = 0.5*ddr*(cos(theta)-sin(theta));
+	r = 10.0*pow(t,3.0);
+	r = r - (15.0*pow(t,4.0)/T);
+	r = r + (6.0*pow(t,5.0)/pow(T,2.0));
+	r = r * (R/pow(T,3.0));
+	dr = pow(t,2);
+	dr = dr - (2.0*pow(t,3)/T);
+	dr = dr + (pow(t,4)/pow(T,2));
+	dr = dr * (30*R/pow(T,3));
+	ddr = pow(t,1);
+	ddr = ddr - (3*pow(t,2)/T);
+	ddr = ddr + (2*pow(t,3)/pow(T,2));
+	ddr = ddr * (60*R/pow(T,3));
 
-	e_x = x_d - currentX;
-	int_e_x = int_e_x + e_x;	
-	dx = currentX - p_x;
-	p_x = currentX;
+	x_d = r*cos(theta);
+	dx_d = dr*cos(theta);
+	ddx_d = ddr*cos(theta);
+	y_d = r*sin(theta);
+	dy_d = dr*sin(theta);
+	ddy_d = ddr*sin(theta);
 
-	e_y = dy_d - currentY;
-	int_e_y = int_e_y + e_y;
-	dy = currentY - p_y;
-	p_y = currentY;
-
-	u_x = A_x*(ddx_d) + Kp_x*e_x + Ki_x*int_e_x + Kd_x*(dx_d-dx);
-	u_y = A_y*(ddy_d) + Kp_y*e_y + Ki_y*int_e_y + Kd_y*(dy_d-dy);
-
-	/*
-	if (t == T)
+	if(t <= T )
 	{
-		printf("\r\n r(%d) || t(%d) || dx_d(%d) || dy_d(%d)",(int)r,(int)t*10,(int)dy_d,(int)x_d);
-	}
-	*/
-	printf("\r\n y_d(%d) || dy_d(%d) || ddy_d(%d)",(int)y_d,(int)dy_d,(int)ddy_d);
-	if(t < T)
-	{
-		if(abs(u_x) > 255 && abs(u_y) > 255)
-		{
-			control_x = 255;
-			control_y = 255;
-		}
-		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = 255;
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) > 255 && abs(u_y) < 50)
-		{
-			control_x = 255;
-			control_y = abs((50/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = 255;
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((50/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) > 255)
-		{
-			control_x = abs((50/255)*400);
-			control_y = 255;
-		}
-		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) < 50)
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((50/255)*400);
-		}
+		e_x = x_d - currentX + curX;
+		int_e_x = int_e_x + e_x;	
+		dx = currentA - p_x;
+		p_x = currentA;
 
-		if(u_x > 0 && u_y > 0)
+		e_y = y_d - currentY + curY;
+		int_e_y = int_e_y + e_y;
+		dy = currentB - p_y;
+		p_y = currentB;
+
+		u_x = A_x*(ddx_d);
+		u_x = u_x + Kp_x*e_x;
+		u_x = u_x + Ki_x*int_e_x;
+		u_x = u_x + Kd_x*(dx_d-dx);
+
+		u_y1 = A_y*(ddy_d);
+		u_y2 = u_y1 + Kp_y*e_y;
+		u_y3 = u_y2 + Ki_y*int_e_y;
+		u_y = u_y3 + Kd_y*(dy_d-dy);
+
+		u_a = u_x + u_y;
+		u_b = u_x - u_y;
+
+		printf("\r\n %d %d %d %d %d",(int)(t*10),(int)(r*10),(int)(x_d*10),(int)(dx_d*10),(int)(ddx_d*10));
+
+		if(abs(u_a) > 255 && abs(u_b) > 255)
+		{
+			control_x = 255;
+			control_y = 255;
+		}
+		else if(abs(u_a) > 255 && abs(u_b) < 255)
+		{
+			control_x = 255;
+			control_y = abs((u_b/255)*400);
+		}
+		else if(abs(u_a) < 255 && abs(u_b) > 255)
+		{
+			control_x = abs((u_a/255)*400);
+			control_y = 255;
+		}
+		else if(abs(u_a) < 255 && abs(u_b) < 255)
+		{
+			control_x = abs((u_a/255)*400);
+			control_y = abs((u_b/255)*400);
+		}
+		
+		if(u_a > 0 && u_b > 0)
 		{
 			drive_motor(MOTOR_L,CW,control_x);
 			drive_motor(MOTOR_R,CW,control_y);
 		}
-		else if(u_x > 0 && u_y < 0)
+		else if(u_a > 0 && u_b < 0)
 		{
 			drive_motor(MOTOR_L,CW,control_x);
 			drive_motor(MOTOR_R,CCW,control_y);
 		}
-		else if(u_x < 0 && u_y > 0)
+		else if(u_a < 0 && u_b > 0)
 		{
 			drive_motor(MOTOR_L,CCW,control_x);
 			drive_motor(MOTOR_R,CW,control_y);
 		}
-		else if(u_x < 0 && u_y < 0)
+		else if(u_a < 0 && u_b < 0)
 		{
 			drive_motor(MOTOR_L,CCW,control_x);
 			drive_motor(MOTOR_R,CCW,control_y);
@@ -340,241 +337,13 @@ void trajectory(float currentX, float currentY, float R, float theta)
 	else
 	{
 		//printf("\r\n STOPPU");
+		curX = currentX;
+		curY = currentY;
 		drive_motor(MOTOR_L,STOP,0);
 		drive_motor(MOTOR_R,STOP,0);
+		timer_count = 0;
+		disable_interrupts(INT_TIMER4);
 	}
-/*
-	if(abs(e_x) > tor && abs(e_y) > tor)
-	{
-		if(abs(u_x) > 255 && abs(u_y) > 255)
-		{
-			control_x = 255;
-			control_y = 255;
-		}
-		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = 255;
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) > 255 && abs(u_y) < 50)
-		{
-			control_x = 255;
-			control_y = abs((50/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = 255;
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((50/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) > 255)
-		{
-			control_x = abs((50/255)*400);
-			control_y = 255;
-		}
-		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) < 50)
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((50/255)*400);
-		}
-
-		if(u_x > 0 && u_y > 0)
-		{
-			drive_motor(MOTOR_L,CW,control_x);
-			drive_motor(MOTOR_R,CW,control_y);
-		}
-		else if(u_x > 0 && u_y < 0)
-		{
-			drive_motor(MOTOR_L,CW,control_x);
-			drive_motor(MOTOR_R,CCW,control_y);
-		}
-		else if(u_x < 0 && u_y > 0)
-		{
-			drive_motor(MOTOR_L,CCW,control_x);
-			drive_motor(MOTOR_R,CW,control_y);
-		}
-		else if(u_x < 0 && u_y < 0)
-		{
-			drive_motor(MOTOR_L,CCW,control_x);
-			drive_motor(MOTOR_R,CCW,control_y);
-		}
-	}
-	else if(abs(e_x) > tor && abs(e_y) < tor)
-	{
-		if(abs(u_x) > 255 && abs(u_y) > 255)
-		{
-			control_x = 255;
-			control_y = 255;
-		}
-		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = 255;
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) > 255 && abs(u_y) < 50)
-		{
-			control_x = 255;
-			control_y = abs((50/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = 255;
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((50/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) > 255)
-		{
-			control_x = abs((50/255)*400);
-			control_y = 255;
-		}
-		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) < 50)
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((50/255)*400);
-		}
-		else
-		{
-			drive_motor(MOTOR_R,STOP,0);
-		}
-
-		if(u_x > 0 && u_y > 0)
-		{
-			drive_motor(MOTOR_L,CW,control_x);
-			drive_motor(MOTOR_R,STOP,0);
-		}
-		else if(u_x > 0 && u_y < 0)
-		{
-			drive_motor(MOTOR_L,CW,control_x);
-			drive_motor(MOTOR_R,STOP,0);
-		}
-		else if(u_x < 0 && u_y > 0)
-		{
-			drive_motor(MOTOR_L,CCW,control_x);
-			drive_motor(MOTOR_R,STOP,0);
-		}
-		else if(u_x < 0 && u_y < 0)
-		{
-			drive_motor(MOTOR_L,CCW,control_x);
-			drive_motor(MOTOR_R,STOP,0);
-		}
-		else
-		{
-			drive_motor(MOTOR_R,STOP,0);
-		}
-	}
-	else if(abs(e_x) < tor && abs(e_y) > tor)
-	{
-		if(abs(u_x) > 255 && abs(u_y) > 255)
-		{
-			control_x = 255;
-			control_y = 255;
-		}
-		else if(abs(u_x) > 255 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = 255;
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) > 255 && abs(u_y) < 50)
-		{
-			control_x = 255;
-			control_y = abs((50/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) > 255)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = 255;
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if((abs(u_x) < 255 && abs(u_x) > 50) && abs(u_y) < 50)
-		{
-			control_x = abs((u_x/255)*400);
-			control_y = abs((50/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) > 255)
-		{
-			control_x = abs((50/255)*400);
-			control_y = 255;
-		}
-		else if(abs(u_x) < 50 && (abs(u_y) < 255 && abs(u_y) > 50))
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((u_y/255)*400);
-		}
-		else if(abs(u_x) < 50 && abs(u_y) < 50)
-		{
-			control_x = abs((50/255)*400);
-			control_y = abs((50/255)*400);
-		}
-		else
-		{
-			drive_motor(MOTOR_L,STOP,0);
-		}
-
-		if(u_x > 0 && u_y > 0)
-		{
-			drive_motor(MOTOR_L,STOP,0);
-			drive_motor(MOTOR_R,CW,control_y);
-		}
-		else if(u_x > 0 && u_y < 0)
-		{
-			drive_motor(MOTOR_L,STOP,0);
-			drive_motor(MOTOR_R,CCW,control_y);
-		}
-		else if(u_x < 0 && u_y > 0)
-		{
-			drive_motor(MOTOR_L,STOP,0);
-			drive_motor(MOTOR_R,CW,control_y);
-		}
-		else if(u_x < 0 && u_y < 0)
-		{
-			drive_motor(MOTOR_L,STOP,0);
-			drive_motor(MOTOR_R,CCW,control_y);
-		}
-		else
-		{
-			drive_motor(MOTOR_L,STOP,0);
-		}
-	}
-	else
-	{
-		printf("\r\n STOPPU");
-		drive_motor(MOTOR_L,STOP,0);
-		drive_motor(MOTOR_R,STOP,0);
-	}
-*/
-	//printf("\r\n t(%.2f) || u_x(%.2f) || u_y(%.2f)", t, u_x, u_y);
 }
 
 void control_position(int axis, float target, float currentPosition) {
@@ -719,65 +488,162 @@ int main (void)
 				enable_interrupts(INT_TIMER4);
 
             }
-            else if (DestPtrStruct.blockPtr[0] == 's')
-            {
-                /* Move backward */
-                move_state = 's';
-                clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);
-            }
             else if (DestPtrStruct.blockPtr[0] == 'a')
             {
-                /* Move left */
-                move_state = 'a';
+                /* Move backward */
+                A_x = A_x + 10;
+                printf("\r\nAx(%d) || Ay(%d)",(int)(A_x*10),(int)(A_y*10));
+                /*move_state = 's';
                 clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);   
+				enable_interrupts(INT_TIMER4);*/
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'z')
+            {
+                /* Move left */
+                A_x = A_x - 10;         
+                printf("\r\nKp_x(%d) || Kp_y(%d)",(int)(A_x*10),(int)(A_y*10));
+                /*move_state = 'a';
+                clear_interrupt(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);   */
 				
     	    }
-            else if (DestPtrStruct.blockPtr[0] == 'd')
+            else if (DestPtrStruct.blockPtr[0] == 's')
             {
                 /* Move right */
-                move_state = 'd';
+                Kp_x = Kp_x + 0.1; 
+                printf("\r\nKp_x(%d) || Kp_y(%d)",(int)(Kp_x*10),(int)(Kp_y*10));
+                /*move_state = 'd'; 
                 clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
             }
-            else if (DestPtrStruct.blockPtr[0] == '1')
+            else if (DestPtrStruct.blockPtr[0] == 'x')
             {
                 /* Move motor left cw */
-                move_state = '1';
+                Kp_x = Kp_x - 0.1; 
+                printf("\r\nKp_x(%d) || Kp_y(%d)",(int)(Kp_x*10),(int)(Kp_y*10));
+                /*move_state = '1';
                 clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
             }
-            else if (DestPtrStruct.blockPtr[0] == '2')
+            else if (DestPtrStruct.blockPtr[0] == 'd')
             {
+            	Ki_x = Ki_x + 0.0001; 
+            	printf("\r\nKi_x(%d) || Ki_y(%d)",(int)(Ki_x*10000),(int)(Ki_y*10000));
                 /* Move motor left ccw */
-                move_state = '2';
+                /*move_state = '2';
                 clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
             }
-            else if (DestPtrStruct.blockPtr[0] == '3')
+            else if (DestPtrStruct.blockPtr[0] == 'c')
             {
+            	Ki_x = Ki_x - 0.0001; 
+            	printf("\r\nKi_x(%d) || Ki_y(%d)",(int)(Ki_x*10000),(int)(Ki_y*10000));
                 /* Move motor right cw */
-                move_state = '3';
-                clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);
+                //move_state = '3';
+                //clear_interrupt(INT_TIMER4);
+				//enable_interrupts(INT_TIMER4);
             }
-            else if (DestPtrStruct.blockPtr[0] == '4')
+            else if (DestPtrStruct.blockPtr[0] == 'f')
             {
                 /* Move motor right ccw */
-                move_state = '4';
-                clear_interrupt(INT_TIMER4);
-				enable_interrupts(INT_TIMER4);
+                Kd_x = Kd_x + 0.1; 
+                printf("\r\nKd_x(%d) || Kd_y(%d)",(int)(Kd_x*10),(int)(Kd_y*10));
+                //move_state = '4';
+                //clear_interrupt(INT_TIMER4);
+				//enable_interrupts(INT_TIMER4);
             }
+            else if (DestPtrStruct.blockPtr[0] == 'v')
+            {
+                /* Move motor right ccw */
+                Kd_x = Kd_x - 0.1; 
+                printf("\r\nKd_x(%d) || Kd_y(%d)",(int)(Kd_x*10),(int)(Kd_y*10));
+                //move_state = '4';
+                //clear_interrupt(INT_TIMER4);
+				//enable_interrupts(INT_TIMER4);
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'g')
+            {
+                /* Move backward */
+                A_y = A_y + 10;
+                printf("\r\nAx(%d) || Ay(%d)",(int)(A_x*10),(int)(A_y*10));
+                /*move_state = 's';
+                clear_interrupt(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'b')
+            {
+                /* Move left */
+                A_y = A_y - 10;         
+                printf("\r\nKp_x(%d) || Kp_y(%d)",(int)(A_x*10),(int)(A_y*10));
+                /*move_state = 'a';
+                clear_interrupt(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);   */
+				
+    	    }
             else if (DestPtrStruct.blockPtr[0] == 'h')
+            {
+                /* Move right */
+                Kp_y = Kp_y + 0.1; 
+                printf("\r\nKp_x(%d) || Kp_y(%d)",(int)(Kp_x*10),(int)(Kp_y*10));
+                /*move_state = 'd'; 
+                clear_interrupt(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'n')
+            {
+                /* Move motor left cw */
+                Kp_y = Kp_y - 0.1; 
+                printf("\r\nKp_x(%d) || Kp_y(%d)",(int)(Kp_x*10),(int)(Kp_y*10));
+                /*move_state = '1';
+                clear_interrupt(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'j')
+            {
+            	Ki_y = Ki_y + 0.0001; 
+            	printf("\r\nKi_x(%d) || Ki_y(%d)",(int)(Ki_x*10000),(int)(Ki_y*10000));
+                /* Move motor left ccw */
+                /*move_state = '2';
+                clear_interrupt(INT_TIMER4);
+				enable_interrupts(INT_TIMER4);*/
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'm')
+            {
+            	Ki_y = Ki_y - 0.0001; 
+            	printf("\r\nKi_x(%d) || Ki_y(%d)",(int)(Ki_x*10000),(int)(Ki_y*10000));
+                /* Move motor right cw */
+                //move_state = '3';
+                //clear_interrupt(INT_TIMER4);
+				//enable_interrupts(INT_TIMER4);
+            }
+            else if (DestPtrStruct.blockPtr[0] == 'k')
+            {
+                /* Move motor right ccw */
+                Kd_y = Kd_y + 0.1; 
+                printf("\r\nKd_x(%d) || Kd_y(%d)",(int)(Kd_x*10),(int)(Kd_y*10));
+                //move_state = '4';
+                //clear_interrupt(INT_TIMER4);
+				//enable_interrupts(INT_TIMER4);
+            }
+            else if (DestPtrStruct.blockPtr[0] == ',')
+            {
+                /* Move motor right ccw */
+                Kd_y = Kd_y - 0.1; 
+                printf("\r\nKd_x(%d) || Kd_y(%d)",(int)(Kd_x*10),(int)(Kd_y*10));
+                //move_state = '4';
+                //clear_interrupt(INT_TIMER4);
+				//enable_interrupts(INT_TIMER4);
+            }
+
+            else if (DestPtrStruct.blockPtr[0] == 'u')
             {
             	/* Home */
             	clear_interrupt(INT_TIMER1);
             	enable_interrupts(INT_TIMER1);
             }
 
-            //sendTx1Count = SendTx1 (((int8u *)DestPtrStruct.blockPtr));
-            putc('F');
+            sendTx1Count = SendTx1 (((int8u *)DestPtrStruct.blockPtr));
+            //putc('F');
             free ((void *)DestPtrStruct.blockPtr);
             MemCount--;
             //EnableIntr();
@@ -1091,8 +957,8 @@ void Home(void){
 		drive_motor(MOTOR_L,CCW,100);
 	}
 	else if(home_state == 2){
-		drive_motor(MOTOR_R,CCW,100);
-		drive_motor(MOTOR_L,CW,100);
+		drive_motor(MOTOR_R,CW,100);
+		drive_motor(MOTOR_L,CCW,100);
 	}
 	return;
 }
@@ -1104,6 +970,7 @@ void Initial_Y_axis(void){
 	count_pulseY = 0;
 	thetaY = 0;
 	current_posY = 0;
+	home_state = 1;
 	drive_motor(MOTOR_R,STOP,0);
 	drive_motor(MOTOR_L,STOP,0);
 	disable_interrupts(INT_TIMER1);
@@ -1184,10 +1051,10 @@ void Encoder2_B(void){
 #INT_TIMER4
 void Run_Motor(void){
 	disable_interrupts(INT_TIMER5);
-	timer_count = timer_count + 0.1;
+	timer_count = timer_count + 1;
 	Encoder();
 	//move_motor(move_state);
-	trajectory(current_posX, current_posY, 50, 45);
+	trajectory(current_posX, current_posY, 50.0, 0.0);
 	/*printf("\nSwitch Right");
 	control_position(MOTOR_L,72,current_posX);
 	control_position(MOTOR_R,72,current_posY);*/
@@ -1199,7 +1066,6 @@ void Run_Motor(void){
 #INT_TIMER5
 void Run_Motor2(void){
 	disable_interrupts(INT_TIMER4);
-	timer_count = timer_count + 0.01;
 	return;
 }
 
